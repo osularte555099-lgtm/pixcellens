@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: picxellens
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run Dashboard.py --server.address=0.0.0.0 --server.port=$PORT --server.headless=true
+    envVars:
+      - key: PICXELLENS_PUBLIC_URL
+        sync: false

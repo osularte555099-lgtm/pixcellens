@@ -1,0 +1,4 @@
+streamlit>=1.40
+qrcode[pil]>=7.4
+pywebview>=5.3
+pyinstaller>=6.10
