@@ -7,7 +7,7 @@ import urllib.request
 from pathlib import Path
 
 from streamlit.web import bootstrap
-import webview
+import webbrowser
 
 
 def free_port():
@@ -52,9 +52,10 @@ def main():
     server_thread.start()
     try:
         threading.Thread(target=wait_for_server, args=(url,), daemon=True).start()
-        time.sleep(3)
-        webview.create_window("picxellens staff desk", url, width=1280, height=820, min_size=(960, 640))
-        webview.start()
+        time.sleep(4)
+        webbrowser.open(url)
+        while True:
+            time.sleep(1)
     finally:
         os._exit(0)
 
