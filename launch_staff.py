@@ -1,12 +1,12 @@
 import os
 import socket
-import subprocess
 import sys
 import threading
 import time
 import urllib.request
 from pathlib import Path
 
+from streamlit.web import bootstrap
 import webview
 
 
@@ -14,6 +14,15 @@ def free_port():
     with socket.socket() as socket_instance:
         socket_instance.bind(("127.0.0.1", 0))
         return socket_instance.getsockname()[1]
+
+
+def local_ip():
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as socket_instance:
+            socket_instance.connect(("8.8.8.8", 80))
+            return socket_instance.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
 
 
 def dashboard_path():
@@ -33,22 +42,21 @@ def wait_for_server(url):
 def main():
     port = free_port()
     url = f"http://127.0.0.1:{port}/?view=staff"
-    environment = os.environ.copy()
-    environment["PICXELLENS_PUBLIC_URL"] = environment.get("PICXELLENS_PUBLIC_URL", "http://localhost:8501")
-    server = subprocess.Popen(
-        [sys.executable, "-m", "streamlit", "run", str(dashboard_path()), "--server.headless=true", "--server.address=127.0.0.1", f"--server.port={port}"],
-        env=environment,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+    os.environ.setdefault("PICXELLENS_PUBLIC_URL", f"http://{local_ip()}:{port}")
+    server_options = {"server.headless": True, "server.address": "127.0.0.1", "server.port": port}
+    server_thread = threading.Thread(
+        target=bootstrap.run,
+        args=(str(dashboard_path()), "", [], server_options),
+        daemon=True,
     )
+    server_thread.start()
     try:
         threading.Thread(target=wait_for_server, args=(url,), daemon=True).start()
-        time.sleep(2)
+        time.sleep(3)
         webview.create_window("picxellens staff desk", url, width=1280, height=820, min_size=(960, 640))
         webview.start()
     finally:
-        server.terminate()
-        server.wait(timeout=5)
+        os._exit(0)
 
 
 if __name__ == "__main__":
