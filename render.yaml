@@ -5,4 +5,9 @@ services:
     plan: free
     buildCommand: ""
     startCommand: python server.py
-    healthCheckPath: /api/registrations
+    healthCheckPath: /health
+    envVars:
+      - key: PIXCELLENS_PUBLIC_URL
+        value: https://picxellens.onrender.com
+      - key: PUBLIC_URL
+        value: https://picxellens.onrender.com

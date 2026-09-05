@@ -12,13 +12,25 @@ from urllib.request import Request, urlopen
 from server import OfficeHandler
 from http.server import ThreadingHTTPServer
 
-API = os.environ.get("PIXCELLENS_API", "http://localhost:8000").rstrip("/")
+API = (
+    os.environ.get("PIXCELLENS_API")
+    or os.environ.get("PIXCELLENS_PUBLIC_URL")
+    or os.environ.get("PUBLIC_URL")
+    or os.environ.get("APP_URL")
+    or "https://pixcellens.onrender.com"
+).rstrip("/")
+PUBLIC_URL = (
+    os.environ.get("PIXCELLENS_PUBLIC_URL")
+    or os.environ.get("PUBLIC_URL")
+    or os.environ.get("APP_URL")
+    or "https://pixcellens.onrender.com"
+).rstrip("/")
 
 
 class StaffApplication(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Pixcellens Staff Portal")
+        self.title("Picxellens Staff Portal")
         self.geometry("1180x720")
         self.minsize(980, 600)
         self.configure(bg="#eef2ef")
@@ -41,7 +53,7 @@ class StaffApplication(tk.Tk):
         header = tk.Frame(self, bg="#fbfcfa", height=70, highlightbackground="#d5dbd7", highlightthickness=1)
         header.pack(fill="x")
         tk.Label(header, text="P", bg="#fbfcfa", fg="#26312d", font=("Georgia", 18), width=3, height=1, relief="groove").pack(side="left", padx=(24, 8), pady=16)
-        tk.Label(header, text="PIXCELLENS  /  STAFF APPLICATION", bg="#fbfcfa", fg="#26312d", font=("Georgia", 14, "bold")).pack(side="left")
+        tk.Label(header, text="PICXELLENS  /  STAFF APPLICATION", bg="#fbfcfa", fg="#26312d", font=("Georgia", 14, "bold")).pack(side="left")
         self.connection_label = tk.Label(header, text="Connecting...", bg="#fbfcfa", fg="#78817d", font=("Consolas", 10))
         self.connection_label.pack(side="right", padx=28)
 
@@ -125,7 +137,7 @@ class StaffApplication(tk.Tk):
         text.pack(side="left", fill="both", expand=True)
         tk.Label(text, text="CUSTOMER CHECK-IN", bg="#f3f8f4", fg="#8a938e", font=("Consolas", 8), anchor="w").pack(fill="x", pady=(4, 8))
         tk.Label(text, text="Scan to join the queue", bg="#f3f8f4", fg="#26312d", font=("Georgia", 17), anchor="w").pack(fill="x")
-        address = f"{API}/index.html#register" if API != "http://localhost:8000" else f"http://{local_ip()}:8000/index.html#register"
+        address = f"{PUBLIC_URL}/#register"
         tk.Label(text, text="Customers scan this code and complete the form on their phone.", bg="#f3f8f4", fg="#78817d", font=("Consolas", 9), anchor="w").pack(fill="x", pady=(6, 4))
         tk.Label(text, text=address, bg="#f3f8f4", fg="#47765b", font=("Consolas", 9), anchor="w").pack(fill="x")
         try:
@@ -173,7 +185,7 @@ class StaffApplication(tk.Tk):
         self.page_title("Settings", "Manage studio information and customer check-in.")
         card = tk.Frame(self.content, bg="#ffffff", highlightbackground="#d5dbd7", highlightthickness=1, padx=24, pady=24)
         card.pack(fill="x", anchor="n")
-        for label, value in (("Studio name", "Pixcellens Photography Studio"), ("Contact number", ""), ("Address", "")):
+        for label, value in (("Studio name", "Picxellens Photography Studio"), ("Contact number", ""), ("Address", "")):
             tk.Label(card, text=label.upper(), bg="#ffffff", fg="#78817d", font=("Consolas", 8), anchor="w").pack(fill="x", pady=(8, 5))
             entry = tk.Entry(card, relief="solid", bd=1, font=("Consolas", 10))
             entry.insert(0, value)
@@ -196,19 +208,19 @@ class StaffApplication(tk.Tk):
     def add_school(self):
         school = self.school_entry.get().strip()
         if not school:
-            messagebox.showwarning("Pixcellens", "Enter a school name first.")
+            messagebox.showwarning("Picxellens", "Enter a school name first.")
             return
         try:
             api_request("/api/schools", "POST", {"name": school})
             self.show_section("Settings")
-            messagebox.showinfo("Pixcellens", f"{school} is now available for student registration.")
+            messagebox.showinfo("Picxellens", f"{school} is now available for student registration.")
         except Exception as error:
             messagebox.showerror("Connection error", str(error))
 
     def call_next(self):
         next_record = next((record for record in self.records if record.get("status") == "Waiting"), None)
         if not next_record:
-            messagebox.showinfo("Pixcellens", "There are no waiting registrations.")
+            messagebox.showinfo("Picxellens", "There are no waiting registrations.")
             return
         try:
             api_request(f"/api/registrations/{next_record['id']}", "PATCH", {"status": "Called"})
@@ -259,11 +271,17 @@ def local_ip():
 
 
 def start_local_server():
-    try:
-        server = ThreadingHTTPServer(("0.0.0.0", 8000), OfficeHandler)
-    except OSError:
+    global API
+    if os.environ.get("PIXCELLENS_API"):
         return
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    for port in range(8000, 8011):
+        try:
+            server = ThreadingHTTPServer(("0.0.0.0", port), OfficeHandler)
+            API = f"http://localhost:{port}"
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            return
+        except OSError:
+            continue
 
 
 if __name__ == "__main__":

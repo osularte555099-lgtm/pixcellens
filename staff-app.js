@@ -1,12 +1,20 @@
 const $ = (selector) => document.querySelector(selector);
+const apiBase = window.PIXCELLENS_API_BASE || 'https://pixcellens.onrender.com';
 let registrations = [];
+let refreshInFlight = false;
 
 async function api(path, options = {}) {
-  const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const response = await fetch(`${apiBase}${path}`, { headers: { 'Content-Type': 'application/json' }, ...options });
   if (!response.ok) throw new Error(`Request failed: ${response.status}`);
   return response.json();
 }
 async function refresh() { registrations = await api('/api/registrations'); }
+async function renderSchools() {
+  const list = $('#school-list');
+  if (!list) return;
+  const schools = await api('/api/schools');
+  list.innerHTML = schools.map(school => `<span>${school}</span>`).join('') || '<span>No schools added.</span>';
+}
 function toast(message) { const element = $('#toast'); element.textContent = message; element.classList.add('show'); setTimeout(() => element.classList.remove('show'), 3200); }
 function renderQueue() {
   const waiting = registrations.filter(item => item.status === 'Waiting').length;
@@ -28,16 +36,28 @@ function renderStaffData() {
   const serviceCounts = registrations.reduce((counts, item) => ({ ...counts, [item.service]: (counts[item.service] || 0) + 1 }), {}); const topService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]; $('#top-service').textContent = topService ? `${topService[0]} (${topService[1]})` : 'No bookings yet';
 }
 function renderQr() {
-  const url = `${window.location.origin}/#register`;
+  const url = `${window.PIXCELLENS_PUBLIC_URL || 'https://pixcellens.onrender.com'}/#register`;
   $('#office-url').textContent = url;
   $('#qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`;
 }
-async function renderAll() { await refresh(); renderQueue(); renderStaffData(); renderQr(); }
-function showStaffPanel(name) { document.querySelectorAll('.staff-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${name}-panel`)); document.querySelectorAll('.staff-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.staffTab === name)); renderStaffData(); }
+async function renderAll(updateQr = false) {
+  if (refreshInFlight) return;
+  refreshInFlight = true;
+  try {
+    await refresh();
+    renderQueue();
+    renderStaffData();
+    if (updateQr) renderQr();
+  } finally {
+    refreshInFlight = false;
+  }
+}
+function showStaffPanel(name) { document.querySelectorAll('.staff-panel').forEach(panel => panel.classList.toggle('active', panel.id === `${name}-panel`)); document.querySelectorAll('.staff-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.staffTab === name)); renderStaffData(); if (name === 'settings') renderSchools().catch(() => toast('Could not load schools.')); }
 
 document.querySelectorAll('[data-staff-tab]').forEach(tab => tab.addEventListener('click', () => showStaffPanel(tab.dataset.staffTab)));
 $('#queue-rows').addEventListener('click', async event => { if (!event.target.matches('.done-button')) return; const item = registrations[Number(event.target.dataset.index)]; try { await api(`/api/registrations/${item.id}`, { method: 'PATCH', body: JSON.stringify({ status: 'Done' }) }); await renderAll(); toast('Registration marked as completed.'); } catch { toast('Could not update the shared queue.'); } });
 document.querySelectorAll('#student-rows, #customer-rows').forEach(table => table.addEventListener('click', async event => { if (!event.target.matches('.done-button')) return; const item = registrations[Number(event.target.dataset.index)]; try { await api(`/api/registrations/${item.id}`, { method: 'PATCH', body: JSON.stringify({ status: 'Done' }) }); await renderAll(); toast('Registration marked as completed.'); } catch { toast('Could not update the shared queue.'); } }));
 $('#clear-demo').addEventListener('click', async () => { try { await api('/api/registrations/done', { method: 'DELETE' }); await renderAll(); toast('Completed registrations cleared.'); } catch { toast('Could not clear completed registrations.'); } });
+$('#add-school').addEventListener('click', async () => { const input = $('#new-school'); const name = input.value.trim(); if (!name) { toast('Enter a school name first.'); return; } try { await api('/api/schools', { method: 'POST', body: JSON.stringify({ name }) }); input.value = ''; await renderSchools(); toast(`${name} added to student registration.`); } catch { toast('Could not add school.'); } });
 setInterval(async () => { try { await renderAll(); } catch { toast('The shared office server is unavailable.'); } }, 10000);
-renderAll().catch(() => toast('Start server.py to connect the staff portal to the customer form.'));
+renderAll(true).then(() => renderSchools()).catch(() => toast('Start server.py to connect the staff portal to the customer form.'));

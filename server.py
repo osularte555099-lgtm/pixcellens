@@ -53,6 +53,9 @@ class OfficeHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == "/health":
+            self.send_json({"status": "ok"})
+            return
         if path == "/api/registrations":
             self.send_json(read_records())
             return
@@ -137,9 +140,21 @@ def local_ip():
         connection.close()
 
 
+def public_url(port):
+    configured = (
+        os.environ.get("PIXCELLENS_PUBLIC_URL")
+        or os.environ.get("PUBLIC_URL")
+        or os.environ.get("APP_URL")
+    )
+    if configured:
+        return configured.rstrip("/")
+    return f"http://{local_ip()}:{port}"
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))
-    print(f"Pixcellens office system: http://localhost:{port}")
-    print(f"Customer QR address:    http://{local_ip()}:{port}/#register")
+    base_url = public_url(port)
+    print(f"Picxellens office system: http://localhost:{port}")
+    print(f"Customer QR address:    {base_url}/#register")
     print("Keep this window open while the office system is in use.")
     ThreadingHTTPServer(("0.0.0.0", port), OfficeHandler).serve_forever()
