@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixcellens Registration</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="browser-frame">
+      <div class="browser-bar"><span></span><span></span><span></span><div></div></div>
+      <header class="site-header">
+        <a class="brand" href="#register" data-view="register"><b>P</b><strong>PIXCELLENS</strong></a>
+        <nav>
+          <a href="#register" data-view="register">Register</a>
+          <a href="#status" data-view="status">My Status</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="view active" id="register-view">
+          <div class="intro">
+            <p class="eyebrow">Photography studio queue</p>
+            <h1>Reserve your place<br />before you arrive.</h1>
+            <p class="lede">Register for a photography service and follow your queue status from your phone.</p>
+            <div class="service-notes"><span>01 / Join the queue</span><span>02 / Get notified</span><span>03 / Get photographed</span></div>
+          </div>
+          <div class="form-panel">
+            <div class="form-heading">
+              <div><p class="eyebrow">Registration</p><h2>Tell us about yourself</h2></div>
+              <div class="type-switch" role="tablist"><button class="selected" data-type="customer">Customer</button><button data-type="student">Student</button></div>
+            </div>
+            <form id="registration-form">
+              <div class="field full"><label for="name">Full name</label><input id="name" required placeholder="e.g. Liza Fernandez" /></div>
+              <div class="field"><label for="contact">Contact number</label><input id="contact" required placeholder="09XX XXX XXXX" /></div>
+              <div class="field"><label for="email">Email address</label><input id="email" type="email" required placeholder="you@email.com" /></div>
+              <div class="field student-only hidden"><label for="school">School name</label><select id="school"><option value="">Select school</option><option>Davao State University</option><option>Ateneo de Davao</option><option>UM Davao</option></select></div>
+              <div class="field student-only hidden"><label for="student-id">Student ID number</label><input id="student-id" placeholder="Student ID" /></div>
+              <div class="field full"><label for="service">Photography service</label><select id="service" required><option value="">Select a service</option><option>Portrait Session</option><option>Event Coverage</option><option>ID Photo</option><option>Graduation Photo</option></select></div>
+              <button class="primary-button" type="submit">Confirm registration <span>→</span></button>
+              <p class="form-footnote">You will receive your queue number immediately after registration.</p>
+            </form>
+          </div>
+        </section>
+
+        <section class="view" id="status-view">
+          <div class="page-title"><p class="eyebrow">Customer access</p><h1>My Status</h1><p>Keep your queue number close. We will call you when your session is ready.</p></div>
+          <div id="status-content" class="status-empty"><div class="empty-mark">P</div><h2>No active registration</h2><p>Register for a service to see your place in the queue here.</p><a class="secondary-button" href="#register" data-view="register">Start registration</a></div>
+        </section>
+
+        <section class="view" id="staff-view">
+          <div class="staff-layout">
+            <aside class="staff-sidebar"><p class="eyebrow">Staff workspace</p><button class="staff-tab active" data-staff-tab="queue">Service Queue</button><button class="staff-tab" data-staff-tab="students">Students</button><button class="staff-tab" data-staff-tab="customers">Customers</button><button class="staff-tab" data-staff-tab="completed">Completed</button><button class="staff-tab" data-staff-tab="reports">Reports</button><button class="staff-tab" data-staff-tab="settings">Settings</button></aside>
+            <div class="staff-content">
+              <div class="staff-panel active" id="queue-panel"><div class="page-title staff-heading"><div><p class="eyebrow">Pixcellens / Staff workspace</p><h1>Service Queue</h1><p>Manage today’s registrations and keep the studio moving.</p></div><button class="secondary-button" id="clear-demo">Clear completed</button></div>
+                <div class="qr-panel"><div><p class="eyebrow">Customer check-in</p><h2>Scan to join the queue</h2><p>Keep this code at the registration counter. Customers scan it with their phone and complete the customer form.</p><small id="office-url">Start the local server to generate the check-in link.</small></div><img id="qr-image" alt="QR code for customer registration" /></div>
+                <div class="stats"><div><strong id="total-count">0</strong><span>Total today</span></div><div><strong id="waiting-count">0</strong><span>Waiting</span></div><div class="mint"><strong id="done-count">0</strong><span>Completed</span></div><div><strong>4</strong><span>Services</span></div></div>
+                <div class="queue-table"><div class="table-head"><span>Queue</span><span>Name</span><span>Type</span><span>Service</span><span>Time in</span><span>Status</span></div><div id="queue-rows"></div></div>
+              </div>
+              <div class="staff-panel" id="students-panel"><div class="page-title"><p class="eyebrow">Registrations / Students</p><h1>Students</h1><p>Student registrations grouped by school and queue status.</p></div><div class="stats"><div class="blue"><strong id="student-total">00</strong><span>Total students today</span></div><div><strong id="student-waiting">00</strong><span>Pending</span></div><div class="mint"><strong id="student-done">00</strong><span>Done</span></div><div><strong id="school-count">00</strong><span>Schools represented</span></div></div><div class="queue-table"><div class="table-head"><span>Queue</span><span>Name</span><span>School</span><span>Service</span><span>Time in</span><span>Status</span></div><div id="student-rows"></div></div></div>
+              <div class="staff-panel" id="customers-panel"><div class="page-title"><p class="eyebrow">Registrations / Customers</p><h1>Customers</h1><p>All regular customer registrations for today, grouped by photography service.</p></div><div class="stats"><div class="sand"><strong id="customer-total">00</strong><span>Total customers today</span></div><div><strong id="customer-waiting">00</strong><span>Pending</span></div><div class="mint"><strong id="customer-done">00</strong><span>Done</span></div><div><strong id="service-count">04</strong><span>Service types booked</span></div></div><div class="queue-table"><div class="table-head"><span>Queue</span><span>Name</span><span>Contact</span><span>Service</span><span>Time in</span><span>Status</span></div><div id="customer-rows"></div></div></div>
+              <div class="staff-panel" id="completed-panel"><div class="page-title"><p class="eyebrow">History / Finished sessions</p><h1>Completed</h1><p>Full history of finished photography sessions.</p></div><div class="queue-table"><div class="table-head"><span>Queue</span><span>Name</span><span>Type</span><span>Service</span><span>Completed</span><span>Action</span></div><div id="completed-rows"></div></div></div>
+              <div class="staff-panel" id="reports-panel"><div class="page-title"><p class="eyebrow">Studio overview</p><h1>Reports</h1><p>Quick operational summary for today.</p></div><div class="report-grid"><div><span>Most booked service</span><strong id="top-service">No bookings yet</strong></div><div><span>Average wait time</span><strong>-- minutes</strong></div><div><span>Sessions completed</span><strong id="report-done">00</strong></div></div></div>
+              <div class="staff-panel" id="settings-panel"><div class="page-title"><p class="eyebrow">Studio administration</p><h1>Settings</h1><p>Manage studio information, staff access, and customer check-in.</p></div><div class="settings-card"><label>Studio name</label><input value="Pixcellens Photography Studio" /><label>Contact number</label><input placeholder="Studio contact number" /><label>Address</label><input placeholder="Studio address" /><button class="primary-button">Save changes</button></div></div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer><span>© PIXCELLENS PHOTOGRAPHY STUDIO</span><span>Need help? Visit the staff table</span></footer>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
