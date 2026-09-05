@@ -38,7 +38,9 @@ function renderStaffData() {
 function renderQr() {
   const url = `${window.PIXCELLENS_PUBLIC_URL || 'https://pixcellens.onrender.com'}/#register`;
   $('#office-url').textContent = url;
-  $('#qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`;
+  $('#office-link').href = url;
+  $('#office-link').textContent = 'Open customer form';
+  $('#qr-image').src = `${apiBase}/api/qr?data=${encodeURIComponent(url)}`;
 }
 async function renderAll(updateQr = false) {
   if (refreshInFlight) return;

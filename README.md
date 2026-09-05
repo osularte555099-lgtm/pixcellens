@@ -16,6 +16,8 @@ To use your own domain, add it in Render under **Settings > Custom Domains**, th
 
 The free Render service is suitable for testing and can sleep when idle. For production records, configure `PIXCELLENS_DATA_DIR` to a persistent Render Disk mount such as `/var/data`, or move the records to an external database. The app now uses atomic writes and will keep registrations in that configured data directory.
 
+Registration times use `Asia/Manila` by default. Set `PIXCELLENS_TIME_ZONE` to another IANA timezone if the studio moves.
+
 ## Mobile-data QR access
 
 For customers to scan the QR code while on personal data instead of the same Wi‑Fi, run the app with a public URL in the environment, for example:

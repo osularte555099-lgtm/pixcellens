@@ -2,10 +2,14 @@ import json
 import os
 import socket
 import sys
-from datetime import datetime
+from io import BytesIO
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+import qrcode
 
 ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 DEFAULT_DATA_DIR = Path(sys.executable).parent if getattr(sys, "frozen", False) else ROOT
@@ -13,6 +17,10 @@ DATA_DIR = Path(os.environ.get("PIXCELLENS_DATA_DIR", DEFAULT_DATA_DIR))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE = DATA_DIR / "registrations.json"
 SCHOOLS_DATABASE = DATA_DIR / "schools.json"
+try:
+    TIME_ZONE = ZoneInfo(os.environ.get("PIXCELLENS_TIME_ZONE", "Asia/Manila"))
+except ZoneInfoNotFoundError:
+    TIME_ZONE = timezone(timedelta(hours=8), name="Asia/Manila")
 
 
 def read_records():
@@ -59,9 +67,25 @@ class OfficeHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path == "/health":
             self.send_json({"status": "ok"})
+            return
+        if path == "/api/qr":
+            target = parse_qs(parsed.query).get("data", [""])[0]
+            if not target:
+                self.send_error(400, "QR data is required")
+                return
+            image = BytesIO()
+            qrcode.make(target).save(image, format="PNG")
+            body = image.getvalue()
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Cache-Control", "public, max-age=3600")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
             return
         if path == "/api/registrations":
             self.send_json(read_records())
@@ -102,7 +126,7 @@ class OfficeHandler(BaseHTTPRequestHandler):
         data = json.loads(self.rfile.read(length))
         records = read_records()
         next_number = max([int(record["queue"]) for record in records] or [100]) + 1
-        record = {**data, "id": next_number, "queue": str(next_number).zfill(3), "time": datetime.now().strftime("%I:%M %p"), "status": "Waiting"}
+        record = {**data, "id": next_number, "queue": str(next_number).zfill(3), "time": datetime.now(TIME_ZONE).strftime("%I:%M %p"), "status": "Waiting"}
         records.append(record)
         write_records(records)
         self.send_json(record, 201)
