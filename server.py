@@ -2,14 +2,12 @@ import json
 import os
 import socket
 import sys
-from io import BytesIO
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
+from urllib.request import urlopen
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
-import qrcode
 
 ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 DEFAULT_DATA_DIR = Path(sys.executable).parent if getattr(sys, "frozen", False) else ROOT
@@ -100,9 +98,9 @@ class OfficeHandler(BaseHTTPRequestHandler):
             if not target:
                 self.send_error(400, "QR data is required")
                 return
-            image = BytesIO()
-            qrcode.make(target).save(image, format="PNG")
-            body = image.getvalue()
+            image_url = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={quote(target)}"
+            with urlopen(image_url, timeout=10) as response:
+                body = response.read()
             self.send_response(200)
             self.send_header("Content-Type", "image/png")
             self.send_header("Cache-Control", "public, max-age=3600")
