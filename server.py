@@ -62,6 +62,15 @@ def write_schools(schools):
 
 
 class OfficeHandler(BaseHTTPRequestHandler):
+    def send_error(self, code, message=None, explain=None):
+        self.send_response(code)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.end_headers()
+        self.wfile.write((message or "Request failed").encode("utf-8"))
+
     def send_json(self, payload, status=200):
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
