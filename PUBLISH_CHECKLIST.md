@@ -45,7 +45,7 @@ Then deploy the repo.
 
 For a custom domain, add the domain in Render, complete its DNS instructions, and replace both values above with the final `https://` hostname.
 
-The free plan is for testing. JSON data stored by this app can be lost when the service restarts, so configure persistent storage or move registrations to a database before production use.
+The free plan is for testing. Attach a persistent Render Disk mounted at `/var/data` on a paid web service, then set `PIXCELLENS_DATA_DIR=/var/data`. Without that disk or an external database, JSON data can be lost when the service restarts.
 
 ## 5) Final verification
 

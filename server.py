@@ -8,8 +8,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
-DATABASE = (Path(sys.executable).parent if getattr(sys, "frozen", False) else ROOT) / "registrations.json"
-SCHOOLS_DATABASE = (Path(sys.executable).parent if getattr(sys, "frozen", False) else ROOT) / "schools.json"
+DEFAULT_DATA_DIR = Path(sys.executable).parent if getattr(sys, "frozen", False) else ROOT
+DATA_DIR = Path(os.environ.get("PIXCELLENS_DATA_DIR", DEFAULT_DATA_DIR))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DATABASE = DATA_DIR / "registrations.json"
+SCHOOLS_DATABASE = DATA_DIR / "schools.json"
 
 
 def read_records():
@@ -19,7 +22,9 @@ def read_records():
 
 
 def write_records(records):
-    DATABASE.write_text(json.dumps(records, indent=2), encoding="utf-8")
+    temporary = DATABASE.with_suffix(".tmp")
+    temporary.write_text(json.dumps(records, indent=2), encoding="utf-8")
+    temporary.replace(DATABASE)
 
 
 def read_schools():
@@ -29,7 +34,9 @@ def read_schools():
 
 
 def write_schools(schools):
-    SCHOOLS_DATABASE.write_text(json.dumps(sorted(set(schools)), indent=2), encoding="utf-8")
+    temporary = SCHOOLS_DATABASE.with_suffix(".tmp")
+    temporary.write_text(json.dumps(sorted(set(schools)), indent=2), encoding="utf-8")
+    temporary.replace(SCHOOLS_DATABASE)
 
 
 class OfficeHandler(BaseHTTPRequestHandler):

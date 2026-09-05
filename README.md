@@ -14,7 +14,7 @@ The included Render configuration publishes the app on the internet so customers
 
 To use your own domain, add it in Render under **Settings > Custom Domains**, then set both `PIXCELLENS_PUBLIC_URL` and `PUBLIC_URL` to the HTTPS domain.
 
-The free Render service is suitable for testing and can sleep when idle. Its local JSON files are not permanent storage, so use a persistent Render disk or an external database before relying on it for production records.
+The free Render service is suitable for testing and can sleep when idle. For production records, configure `PIXCELLENS_DATA_DIR` to a persistent Render Disk mount such as `/var/data`, or move the records to an external database. The app now uses atomic writes and will keep registrations in that configured data directory.
 
 ## Mobile-data QR access
 
