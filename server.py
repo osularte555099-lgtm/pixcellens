@@ -26,7 +26,21 @@ except ZoneInfoNotFoundError:
 def read_records():
     if not DATABASE.exists():
         return []
-    return json.loads(DATABASE.read_text(encoding="utf-8"))
+    records = json.loads(DATABASE.read_text(encoding="utf-8"))
+    changed = False
+    for record in records:
+        if record.get("_time_zone") == "Asia/Manila":
+            continue
+        try:
+            old_time = datetime.strptime(record["time"], "%I:%M %p")
+            record["time"] = (old_time + timedelta(hours=8)).strftime("%I:%M %p")
+        except (KeyError, TypeError, ValueError):
+            pass
+        record["_time_zone"] = "Asia/Manila"
+        changed = True
+    if changed:
+        write_records(records)
+    return records
 
 
 def write_records(records):
@@ -126,7 +140,7 @@ class OfficeHandler(BaseHTTPRequestHandler):
         data = json.loads(self.rfile.read(length))
         records = read_records()
         next_number = max([int(record["queue"]) for record in records] or [100]) + 1
-        record = {**data, "id": next_number, "queue": str(next_number).zfill(3), "time": datetime.now(TIME_ZONE).strftime("%I:%M %p"), "status": "Waiting"}
+        record = {**data, "id": next_number, "queue": str(next_number).zfill(3), "time": datetime.now(TIME_ZONE).strftime("%I:%M %p"), "_time_zone": "Asia/Manila", "status": "Waiting"}
         records.append(record)
         write_records(records)
         self.send_json(record, 201)
@@ -149,6 +163,13 @@ class OfficeHandler(BaseHTTPRequestHandler):
         self.send_error(404)
 
     def do_DELETE(self):
+        parts = self.path.strip("/").split("/")
+        if len(parts) == 3 and parts[:2] == ["api", "registrations"] and parts[2] != "done":
+            record_id = int(parts[2])
+            records = [record for record in read_records() if record["id"] != record_id]
+            write_records(records)
+            self.send_json(records)
+            return
         if self.path != "/api/registrations/done":
             self.send_error(404)
             return

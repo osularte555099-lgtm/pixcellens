@@ -120,6 +120,7 @@ class StaffApplication(tk.Tk):
         tree.configure(yscrollcommand=scroll.set)
         if not completed:
             tk.Button(self.content, text="MARK SELECTED AS DONE", command=lambda: self.mark_selected(tree), bg="#26312d", fg="#ffffff", relief="flat", padx=16, pady=10, font=("Consolas", 9), cursor="hand2").pack(anchor="e", pady=14)
+            tk.Button(self.content, text="DELETE SELECTED", command=lambda: self.delete_selected(tree), bg="#a85c52", fg="#ffffff", relief="flat", padx=16, pady=10, font=("Consolas", 9), cursor="hand2").pack(anchor="e", pady=(0, 14))
 
     def queue_page(self):
         self.page_title("Service Queue", "Customer registrations from the QR form appear here.")
@@ -236,6 +237,19 @@ class StaffApplication(tk.Tk):
             api_request(f"/api/registrations/{selection[0]}", "PATCH", {"status": "Done"})
             self.load_records()
             messagebox.showinfo("Pixcellens", "Registration marked as completed.")
+        except Exception as error:
+            messagebox.showerror("Connection error", str(error))
+
+    def delete_selected(self, tree):
+        selection = tree.selection()
+        if not selection:
+            return
+        record = next((item for item in self.records if str(item.get("id", item.get("queue", ""))) == selection[0]), None)
+        if not record or not messagebox.askyesno("Delete registration", f"Delete queue {record['queue']}? The customer can register again."):
+            return
+        try:
+            api_request(f"/api/registrations/{record['id']}", "DELETE")
+            self.load_records()
         except Exception as error:
             messagebox.showerror("Connection error", str(error))
 
